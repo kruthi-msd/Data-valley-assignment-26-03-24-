@@ -1,65 +1,69 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 
-public class DepartmentStore {
+public class Database{
 
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/departments";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "password";
-
-    public void addDepartment(Department department) throws SQLException {
-        String SQL = "INSERT INTO department(id, name) VALUES(?, ?)";
-
-        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-             PreparedStatement preparedStatement = connection.prepareStatement(SQL)) {
-
-            preparedStatement.setLong(1, department.getId());
-            preparedStatement.setString(2, department.getName());
-
-            preparedStatement.executeUpdate();
-
-        }
-    }
+    private static final String DATABASE_URL = "jdbc:mysql://localhost:3306/departments";
+    private static final String DATABASE_USER = "root";
+    private static final String DATABASE_PASSWORD = "password";
 
     public static void main(String[] args) {
-        DepartmentStore departmentStore = new DepartmentStore();
-
-        try {
-            Department department = new Department(1, "Sales");
-            departmentStore.addDepartment(department);
-
-            System.out.println("Department added successfully!");
-
-        } catch (SQLException e) {
-            System.err.println("Error adding department: " + e.getMessage());
-        }
+        Department department = new Department(1, "Human Resources");
+        saveDepartment(department);
     }
 
-    public static class Department {
-        private long id;
-        private String name;
+    public static void saveDepartment(Department department) {
+        Connection connection = null;
+        Statement statement = null;
 
-        public Department(long id, String name) {
-            this.id = id;
-            this.name = name;
-        }
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
 
-        public long getId() {
-            return id;
-        }
+          
+            connection = DriverManager.getConnection(DATABASE_URL, DATABASE_USER, DATABASE_PASSWORD);
 
-        public void setId(long id) {
-            this.id = id;
-        }
+          
+            statement = connection.createStatement();
 
-        public String getName() {
-            return name;
-        }
+      
+            String query = "INSERT INTO department (id, name) VALUES (" 
+                + department.getId() + ", '" + department.getName() + "')";
 
-        public void setName(String name) {
-            this.name = name;
+      
+            statement.executeUpdate(query);
+
+            System.out.println("Department saved successfully!");
+
+        } catch (ClassNotFoundException e) {
+            System.out.println("MySQL JDBC Driver not found!");
+            
+        } catch (SQLException e) {
+            System.out.println("Error connecting to the database!);
+        } finally {
+    
+            try {
+                if (statement != null) statement.close();
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+            
+            }
         }
+    }
+}
+
+class Department {
+    private int id;
+    private String name;
+
+    public Department(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
     }
 }
